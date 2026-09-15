@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YT Thumbnail Tester — MC Search (Dark)</title>
+<style>
+  :root{
+    --bg:#0f0f0f; --card:#181818; --hover:#272727; --text:#f1f1f1; --sub:#aaaaaa;
+    --border:#303030; --chip-bg:#272727; --chip-active-bg:#f1f1f1; --chip-active-text:#0f0f0f;
+    --blue:#3ea6ff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Roboto","Arial",sans-serif;background:var(--bg);color:var(--text);}
+
+  /* ============ HEADER ============ */
+  .yt-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 16px;height:56px;position:sticky;top:0;background:var(--bg);z-index:50;
+  }
+  .yt-header-left{display:flex;align-items:center;gap:16px;}
+  .hamburger{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;border:none;}
+  .hamburger:hover{background:var(--hover);}
+  .hamburger svg{width:24px;height:24px;}
+  .yt-logo{display:flex;align-items:center;gap:4px;}
+  .yt-logo svg{height:20px;}
+  .yt-header-mid{flex:1;max-width:640px;margin:0 40px;display:flex;}
+  .search-box{display:flex;flex:1;height:40px;}
+  .search-input{
+    flex:1;border:1px solid #303030;border-right:none;border-radius:20px 0 0 20px;
+    padding:0 16px;font-size:16px;outline:none;background:#121212;color:var(--text);
+  }
+  .search-input:focus{border-color:var(--blue);}
+  .search-btn{
+    width:64px;background:#222;border:1px solid #303030;border-left:none;
+    border-radius:0 20px 20px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .mic-btn{
+    width:40px;height:40px;border-radius:50%;background:#181818;border:none;
+    display:flex;align-items:center;justify-content:center;margin-left:8px;cursor:pointer;flex-shrink:0;
+  }
+  .yt-header-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .icon-btn{width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;background:none;border:none;}
+  .icon-btn:hover{background:var(--hover);}
+  .icon-btn svg{width:24px;height:24px;fill:var(--text);}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7b5cff,#ff5c8a);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;}
+
+  /* ============ CHIPS ============ */
+  .chips-row{
+    display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);
+    overflow-x:auto;scrollbar-width:none;align-items:center;
+  }
+  .chips-row::-webkit-scrollbar{display:none;}
+  .filter-icon{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500;flex-shrink:0;padding:6px 12px;border:1px solid #303030;border-radius:8px;cursor:pointer;color:var(--text);}
+  .chip{
+    flex-shrink:0;padding:6px 12px;border-radius:8px;font-size:14px;background:var(--chip-bg);
+    color:var(--text);white-space:nowrap;cursor:pointer;
+  }
+  .chip.active{background:var(--chip-active-bg);color:var(--chip-active-text);}
+
+  /* ============ RESULTS ============ */
+  .results{max-width:1100px;margin:0 auto;padding:12px 16px 80px;}
+  .result-row{display:flex;gap:16px;padding:8px 0;margin-bottom:8px;cursor:pointer;border-radius:12px;}
+  .result-row .thumb-wrap{
+    position:relative;width:360px;flex-shrink:0;border-radius:12px;overflow:hidden;background:#000;
+    aspect-ratio:16/9;
+  }
+  .result-row .thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+  .duration-badge{
+    position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.8);color:#fff;
+    font-size:12px;font-weight:500;padding:2px 5px;border-radius:4px;
+  }
+  .result-meta{flex:1;min-width:0;padding-top:2px;}
+  .result-title{
+    font-size:18px;font-weight:400;line-height:1.4;color:var(--text);margin:0 0 6px 0;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .result-sub{font-size:13px;color:var(--sub);margin-bottom:8px;}
+  .channel-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+  .channel-avatar{width:24px;height:24px;border-radius:50%;flex-shrink:0;object-fit:cover;background:#444;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:600;}
+  .channel-name{font-size:13px;color:var(--sub);}
+  .result-desc{font-size:13px;color:var(--sub);margin-top:8px;line-height:1.5;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+  .your-video .thumb-wrap{outline:3px solid var(--blue);outline-offset:2px;}
+  .your-tag{
+    position:absolute;top:6px;left:6px;background:var(--blue);color:#0f0f0f;font-size:11px;
+    font-weight:700;padding:3px 8px;border-radius:4px;
+  }
+  .edit-fab{
+    position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.8);color:#fff;width:28px;height:28px;
+    border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+
+  /* ============ SETTINGS DRAWER (hamburger) ============ */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;display:none;}
+  .overlay.open{display:block;}
+  .drawer{
+    position:fixed;top:0;left:0;bottom:0;width:340px;max-width:88vw;background:#0f0f0f;
+    border-right:1px solid var(--border);z-index:101;transform:translateX(-100%);
+    transition:transform 0.25s ease;overflow-y:auto;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer-header{display:flex;align-items:center;gap:20px;padding:14px 16px;border-bottom:1px solid var(--border);}
+  .drawer-title{font-size:16px;font-weight:500;}
+  .drawer-body{padding:16px;}
+  .field-label{font-size:12px;color:var(--sub);margin:16px 0 6px;text-transform:none;}
+  .field-label:first-child{margin-top:0;}
+  .text-input{
+    width:100%;background:#121212;border:1px solid #303030;border-radius:8px;color:var(--text);
+    padding:10px 12px;font-size:14px;font-family:inherit;outline:none;
+  }
+  .text-input:focus{border-color:var(--blue);}
+  .file-drop{
+    border:1.5px dashed #303030;border-radius:8px;padding:20px;text-align:center;cursor:pointer;
+    color:var(--sub);font-size:13px;margin-top:6px;
+  }
+  .file-drop:hover{border-color:var(--blue);color:var(--text);}
+  .file-drop img{max-width:100%;border-radius:6px;margin-top:8px;}
+  .drawer-btn{
+    width:100%;padding:10px;border-radius:20px;border:none;font-size:14px;font-weight:500;
+    cursor:pointer;margin-top:20px;
+  }
+  .btn-primary{background:var(--blue);color:#0f0f0f;}
+  .btn-secondary{background:#272727;color:var(--text);margin-top:8px;}
+  .drawer-section-title{font-size:14px;font-weight:500;padding:16px 16px 0;color:var(--text);}
+  .drawer-hint{font-size:12px;color:var(--sub);padding:4px 16px 0;line-height:1.5;}
+
+  /* ============ MOBILE ============ */
+  @media (max-width:760px){
+    .yt-header-mid{display:none;}
+    .desktop-only-flex{display:none !important;}
+    .mobile-search-icon{display:flex !important;}
+    .results{padding:0;}
+    .result-row{flex-direction:column;gap:0;padding:0;margin-bottom:16px;border-radius:0;}
+    .result-row .thumb-wrap{width:100%;border-radius:0;}
+    .result-meta{padding:10px 12px;display:flex;gap:10px;}
+    .result-text{flex:1;min-width:0;}
+    .result-title{font-size:15px;margin-bottom:4px;}
+    .result-sub{font-size:12.5px;margin-bottom:0;}
+    .channel-row{display:none;}
+    .result-desc{display:none;}
+    .mobile-channel-name{font-size:12.5px;color:var(--sub);margin-top:2px;}
+  }
+  .desktop-only-flex{display:flex;}
+
+  .view-toggle{max-width:1100px;margin:8px auto 0;padding:0 16px;display:flex;justify-content:flex-end;gap:8px;}
+  .toggle-btn{
+    font-size:13px;padding:6px 14px;border-radius:16px;border:1px solid #303030;background:#181818;
+    color:var(--text);cursor:pointer;font-family:inherit;
+  }
+  .toggle-btn.active{background:var(--blue);color:#0f0f0f;border-color:var(--blue);}
+
+  .refresh-hint{
+    max-width:1100px;margin:14px auto 0;padding:10px 16px;font-size:12.5px;color:var(--sub);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="yt-header">
+  <div class="yt-header-left">
+    <button class="hamburger" onclick="openDrawer()">
+      <svg viewBox="0 0 24 24"><path fill="var(--text)" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
+    </button>
+    <div class="yt-logo">
+      <svg viewBox="0 0 90 20" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="2" width="32" height="16" rx="5" fill="#FF0000"/>
+        <path d="M13 6.5L21 10L13 13.5V6.5Z" fill="#fff"/>
+        <text x="36" y="15" font-family="Arial" font-size="16" font-weight="500" fill="#f1f1f1">YouTube</text>
+      </svg>
+    </div>
+  </div>
+  <div class="yt-header-mid">
+    <div class="search-box">
+      <input class="search-input" type="text" id="searchInput" value="minecraft challenges">
+      <div class="search-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#f1f1f1" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+      </div>
+    </div>
+    <button class="mic-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#f1f1f1" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+    </button>
+  </div>
+  <div class="yt-header-right">
+    <button class="icon-btn mobile-search-icon" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+    </button>
+    <button class="icon-btn desktop-only-flex">
+      <svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+    </button>
+    <button class="icon-btn desktop-only-flex">
+      <svg viewBox="0 0 24 24"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+    </button>
+    <div class="avatar" onclick="openDrawer()">Y</div>
+  </div>
+</div>
+
+<div class="chips-row">
+  <div class="filter-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#f1f1f1" d="M3 6h18v2H3V6zm4 5h10v2H7v-2zm4 5h2v2h-2v-2z"/></svg>
+    Filters
+  </div>
+  <div class="chip active">All</div>
+  <div class="chip">Minecraft</div>
+  <div class="chip">Challenges</div>
+  <div class="chip">Survival</div>
+  <div class="chip">SMP</div>
+  <div class="chip">Hardcore</div>
+  <div class="chip">100 Days</div>
+  <div class="chip">Live</div>
+</div>
+
+<div class="view-toggle">
+  <button class="toggle-btn active" onclick="setView('desktop')">🖥 Desktop</button>
+  <button class="toggle-btn" onclick="setView('mobile')">📱 Mobile</button>
+  <button class="toggle-btn" onclick="reshuffle()">🔀 Reshuffle</button>
+</div>
+
+<div class="results" id="results"></div>
+
+<div class="refresh-hint">Order reshuffles on every page load — or tap Reshuffle above. Tap the ✎ on your card, or the hamburger menu, to edit your thumbnail/title/channel.</div>
+
+<!-- ============ SETTINGS DRAWER ============ -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <button class="hamburger" onclick="closeDrawer()">
+      <svg viewBox="0 0 24 24"><path fill="var(--text)" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
+    </button>
+    <div class="drawer-title">Edit your card</div>
+  </div>
+  <div class="drawer-body">
+    <div class="field-label">Your thumbnail</div>
+    <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+      <div id="dropText">Tap to upload image</div>
+      <img id="previewImg" style="display:none">
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+
+    <div class="field-label">Video title</div>
+    <input type="text" class="text-input" id="titleInput" placeholder="e.g. I Survived 100 Days as a Villager" maxlength="100">
+
+    <div class="field-label">Channel name</div>
+    <input type="text" class="text-input" id="channelInput" placeholder="e.g. YourChannelName" maxlength="40">
+
+    <div class="field-label">Duration</div>
+    <input type="text" class="text-input" id="durationInput" placeholder="e.g. 24:10">
+
+    <button class="drawer-btn btn-primary" onclick="saveCard()">Save changes</button>
+    <button class="drawer-btn btn-secondary" onclick="clearCard()">Reset card</button>
+  </div>
+
+  <div class="drawer-section-title">About this tool</div>
+  <div class="drawer-hint">Your card is inserted at a random position among Minecraft challenge/SMP style results each time the page loads, so you can see how your thumbnail holds up in different spots on the results page.</div>
+</div>
+
+<script>
+// ---------- Competitor placeholder cards (styled art, MC challenge/SMP style) ----------
+const competitorPool = [
+  {
+    title: "Minecraft Hardcore But EVERYTHING Is Locked",
+    channel: "RedLockCraft",
+    avatarColor: "#c0392b",
+    views: "3.7M views", time: "2 weeks ago",
+    duration: "28:44",
+    desc: "Every block, item, and mechanic starts locked and I have to earn access to all of it in hardcore mode.",
+    thumbGrad: "linear-gradient(180deg,#6a8ce0 0%,#1a1030 60%,#1a1030 100%)",
+    thumbText: "EVERYTHING",
+    assetPath: "assets/thumbnail1.jpg"
+  },
+  {
+    title: "Minecraft Hardcore 100 Days — Full Castle Base",
+    channel: "StoneKeepGaming",
+    avatarColor: "#27ae60",
+    views: "5.1M views", time: "1 month ago",
+    duration: "36:20",
+    desc: "I built an entire castle base over 100 days in hardcore mode, surviving every threat along the way.",
+    thumbGrad: "linear-gradient(160deg,#2d5a2d,#4a7c3f)",
+    thumbText: "100 DAYS CASTLE",
+    assetPath: "assets/thumbnail2.jpg"
+  },
+  {
+    title: "My Spawnpoint Was Set To The Nether",
+    channel: "TurtleSMP",
+    avatarColor: "#16a085",
+    views: "1.4M views", time: "4 days ago",
+    duration: "18:52",
+    desc: "One wrong bed placement and now every respawn drops me straight into the Nether.",
+    thumbGrad: "linear-gradient(160deg,#5a1a10,#8e3d1a)",
+    thumbText: "SPAWN: NETHER",
+    assetPath: "assets/thumbnail3.jpg"
+  },
+  {
+    title: "Hardcore 100 Days But It's a RAFT Survival Challenge",
+    channel: "OceanCraftHC",
+    avatarColor: "#2980b9",
+    views: "2.9M views", time: "3 months ago",
+    duration: "31:09",
+    desc: "Stranded on a single raft with nothing, I had 100 days to build an entire island civilization.",
+    thumbGrad: "linear-gradient(160deg,#0a3d5c,#1e6fa8)",
+    thumbText: "RAFT SURVIVAL",
+    assetPath: "assets/thumbnail4.jpg"
+  },
+  {
+    title: "I Explored Every Random Chunk in Minecraft",
+    channel: "ChunkHopper",
+    avatarColor: "#8e44ad",
+    views: "980K views", time: "6 days ago",
+    duration: "21:37",
+    desc: "Each chunk in this world is randomly generated from a totally different biome, and I have to survive it.",
+    thumbGrad: "linear-gradient(160deg,#2a1a5c,#7a3d9e)",
+    thumbText: "RANDOM CHUNKS",
+    assetPath: "assets/thumbnail5.jpg"
+  },
+  {
+    title: "Would You Rather: Minecraft Loot Edition",
+    channel: "ChallengeBlox",
+    avatarColor: "#1abc9c",
+    views: "1.2M views", time: "1 week ago",
+    duration: "15:48",
+    desc: "Every round I have to pick between two random loot pools, and one of them always backfires horribly.",
+    thumbGrad: "linear-gradient(160deg,#1a5c3d,#3d8e6a)",
+    thumbText: "WOULD YOU RATHER",
+    assetPath: "assets/thumbnail6.jpg"
+  },
+  {
+    title: "Golem vs Piglin Brute — Minecraft Mob Battles",
+    channel: "MobArenaMC",
+    avatarColor: "#d35400",
+    views: "720K views", time: "5 days ago",
+    duration: "12:30",
+    desc: "Two of the toughest mobs in the game go head to head in a custom battle arena.",
+    thumbGrad: "linear-gradient(160deg,#3d5c1a,#6a8e3d)",
+    thumbText: "MOB BATTLE",
+    assetPath: "assets/thumbnail7.jpg"
+  },
+  {
+    title: "I Only Had ONE Minute To Find Diamonds Each Day",
+    channel: "SpeedSurviveMC",
+    avatarColor: "#f39c12",
+    views: "2.1M views", time: "2 weeks ago",
+    duration: "23:15",
+    desc: "One minute of mining per in-game day. Everything else I have to figure out on the fly.",
+    thumbGrad: "linear-gradient(160deg,#5c4a0a,#8e7a1e)",
+    thumbText: "1 MIN MINING",
+    assetPath: "assets/thumbnail8.jpg"
+  }
+];
+
+let userCard = JSON.parse(localStorage.getItem('ytTesterUserCard') || 'null');
+let shuffledOrder = [];
+
+function initials(name){
+  return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+}
+
+function shuffle(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function fallbackThumbHTML(v){
+  return `<div style="width:100%;height:100%;background:${v.thumbGrad};display:flex;align-items:center;justify-content:center;">
+    <span style="color:rgba(255,255,255,0.9);font-family:Arial,sans-serif;font-weight:900;font-size:22px;letter-spacing:1px;text-shadow:0 2px 8px rgba(0,0,0,0.5);text-align:center;padding:0 16px;">${v.thumbText}</span>
+  </div>`;
+}
+
+function renderThumb(v){
+  if(v.imgSrc){
+    // User-uploaded image (data URL from the settings drawer)
+    return `<img src="${v.imgSrc}" alt="thumbnail">`;
+  }
+  if(v.assetPath){
+    // Drop your own file at this path (e.g. assets/thumbnail1.jpg) to replace the placeholder.
+    // Falls back to the gradient placeholder automatically if the file isn't found.
+    const escaped = v.assetPath.replace(/'/g, "\\'");
+    return `<img src="${v.assetPath}" alt="thumbnail" data-asset="${v.assetPath}"
+      onerror="this.onerror=null; this.outerHTML = fallbackThumbHTML(competitorPool.find(c=>c.assetPath==='${escaped}'));">`;
+  }
+  return fallbackThumbHTML(v);
+}
+
+function getYourCardData(){
+  if(userCard && userCard.imgSrc){
+    return {
+      title: userCard.title || "Your video title",
+      channel: userCard.channel || "Your channel",
+      views: "New", time: "just now",
+      duration: userCard.duration || "—",
+      desc: "Your video, shown in this position among MC challenge/SMP search results.",
+      imgSrc: userCard.imgSrc,
+      isYour: true
+    };
+  }
+  return {
+    title: "Your video title will appear here",
+    channel: "Your channel name",
+    views: "—", time: "",
+    duration: "—",
+    desc: "Tap the hamburger menu (top left) to upload your thumbnail.",
+    thumbGrad: "linear-gradient(160deg,#2a2a2a,#444)",
+    thumbText: "TAP ✎ TO ADD YOURS",
+    isYour: true
+  };
+}
+
+function buildOrder(){
+  const chosen = shuffle(competitorPool).slice(0, 7);
+  const insertAt = Math.floor(Math.random() * (chosen.length + 1));
+  chosen.splice(insertAt, 0, { isYourSlot: true });
+  return chosen;
+}
+
+function render(){
+  const container = document.getElementById('results');
+  container.innerHTML = '';
+  shuffledOrder.forEach(v => {
+    const data = v.isYourSlot ? getYourCardData() : v;
+    const isYour = !!data.isYour;
+
+    const row = document.createElement('div');
+    row.className = 'result-row' + (isYour ? ' your-video' : '');
+    row.onmouseenter = () => row.style.background = 'var(--hover)';
+    row.onmouseleave = () => row.style.background = 'transparent';
+
+    row.innerHTML = `
+      <div class="thumb-wrap">
+        ${isYour ? '<div class="your-tag">YOUR VIDEO</div><button class="edit-fab" onclick="event.stopPropagation();openDrawer()">✎</button>' : ''}
+        ${renderThumb(data)}
+        <div class="duration-badge">${data.duration}</div>
+      </div>
+      <div class="result-meta">
+        <div class="result-text">
+          <p class="result-title">${data.title}</p>
+          <div class="result-sub">${data.views}${data.time ? ' • ' + data.time : ''}</div>
+          <div class="channel-row">
+            <div class="channel-avatar" style="background:${data.avatarColor || '#555'};">${initials(data.channel)}</div>
+            <div class="channel-name">${data.channel}</div>
+          </div>
+          <div class="mobile-channel-name">${data.channel}</div>
+          <div class="result-desc">${data.desc}</div>
+        </div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function reshuffle(){
+  shuffledOrder = buildOrder();
+  render();
+}
+
+function setView(mode){
+  document.querySelectorAll('.toggle-btn')[0].classList.toggle('active', mode==='desktop');
+  document.querySelectorAll('.toggle-btn')[1].classList.toggle('active', mode==='mobile');
+  const body = document.body;
+  if(mode==='mobile'){
+    body.style.maxWidth = '420px';
+    body.style.margin = '0 auto';
+    body.style.borderLeft = '1px solid #303030';
+    body.style.borderRight = '1px solid #303030';
+    body.style.minHeight = '100vh';
+  } else {
+    body.style.maxWidth = 'none';
+    body.style.margin = '0';
+    body.style.border = 'none';
+  }
+}
+
+// ---------- Drawer ----------
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+  if(userCard){
+    document.getElementById('titleInput').value = userCard.title || '';
+    document.getElementById('channelInput').value = userCard.channel || '';
+    document.getElementById('durationInput').value = userCard.duration || '';
+    if(userCard.imgSrc){
+      document.getElementById('previewImg').src = userCard.imgSrc;
+      document.getElementById('previewImg').style.display = 'block';
+      document.getElementById('dropText').textContent = 'Tap to change image';
+    }
+  }
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+let pendingImg = null;
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    pendingImg = ev.target.result;
+    document.getElementById('previewImg').src = pendingImg;
+    document.getElementById('previewImg').style.display = 'block';
+    document.getElementById('dropText').textContent = 'Tap to change image';
+  };
+  reader.readAsDataURL(file);
+});
+
+function saveCard(){
+  userCard = {
+    imgSrc: pendingImg || (userCard ? userCard.imgSrc : null),
+    title: document.getElementById('titleInput').value.trim(),
+    channel: document.getElementById('channelInput').value.trim(),
+    duration: document.getElementById('durationInput').value.trim()
+  };
+  localStorage.setItem('ytTesterUserCard', JSON.stringify(userCard));
+  closeDrawer();
+  render();
+}
+
+function clearCard(){
+  userCard = null;
+  pendingImg = null;
+  localStorage.removeItem('ytTesterUserCard');
+  document.getElementById('titleInput').value = '';
+  document.getElementById('channelInput').value = '';
+  document.getElementById('durationInput').value = '';
+  document.getElementById('previewImg').style.display = 'none';
+  document.getElementById('dropText').textContent = 'Tap to upload image';
+  render();
+}
+
+// init
+shuffledOrder = buildOrder();
+render();
+</script>
+
+</body>
+</html>
